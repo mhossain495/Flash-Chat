@@ -19,7 +19,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // Initialize an instance of Cloud Firestore
         let db = Firestore.firestore()
-        
+        print(db)
         return true
     }
 
