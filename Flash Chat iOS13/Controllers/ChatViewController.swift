@@ -35,8 +35,10 @@ class ChatViewController: UIViewController {
         
         func loadMessages() {
            
-            
-            db.collection(K.FStore.collectionName).addSnapshotListener { (querySnapshot, error) in
+            // Load Firestore collection and order messages by date key value
+            db.collection(K.FStore.collectionName)
+                .order(by: K.FStore.dateField)
+                .addSnapshotListener { (querySnapshot, error) in
                 
                 // Start with empty messages array instead of prior data
                 self.messages = []
@@ -45,10 +47,7 @@ class ChatViewController: UIViewController {
                     print("There was an issue retrieving data from Firestore. \(e)")
                 } else {
                     
-                    // Remove old messages before sending new message
-                   
-
-                    
+ 
                     if let snapshotDocuments = querySnapshot?.documents {
                         for doc in snapshotDocuments {
                             let data = doc.data()
@@ -71,10 +70,14 @@ class ChatViewController: UIViewController {
     
         
    
-    
+    // Save newly sent message to Firestore database
     @IBAction func sendPressed(_ sender: UIButton) {
         if let messageBody = messageTextfield.text, let messageSender = Auth.auth().currentUser?.email {
-            db.collection(K.FStore.collectionName).addDocument(data: [K.FStore.senderField : messageSender,K.FStore.bodyField: messageBody]) { (error) in
+            db.collection(K.FStore.collectionName).addDocument(data: [
+            K.FStore.senderField: messageSender,
+            K.FStore.bodyField: messageBody,
+            K.FStore.dateField: Date().timeIntervalSince1970
+            ]) { (error) in
                 if let e = error {
                     print ("There was an issue saving data to firestore, \(e)")
                 } else {
@@ -93,10 +96,7 @@ class ChatViewController: UIViewController {
         } catch let signOutError as NSError {
           print ("Error signing out: %@", signOutError)
         }
-          
-        
     }
-    
     
 }
 
