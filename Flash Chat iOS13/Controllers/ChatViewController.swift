@@ -29,16 +29,16 @@ class ChatViewController: UIViewController {
         navigationItem.hidesBackButton = true
         
         tableView.register(UINib(nibName: K.cellNibName, bundle: nil), forCellReuseIdentifier: K.cellIdentifier)
-
+        
         loadMessages()
     }
+    
+    func loadMessages() {
         
-        func loadMessages() {
-           
-            // Load Firestore collection and order messages by date key value
-            db.collection(K.FStore.collectionName)
-                .order(by: K.FStore.dateField)
-                .addSnapshotListener { (querySnapshot, error) in
+        // Load Firestore collection and order messages by date key value
+        db.collection(K.FStore.collectionName)
+            .order(by: K.FStore.dateField)
+            .addSnapshotListener { (querySnapshot, error) in
                 
                 // Start with empty messages array instead of prior data
                 self.messages = []
@@ -47,41 +47,52 @@ class ChatViewController: UIViewController {
                     print("There was an issue retrieving data from Firestore. \(e)")
                 } else {
                     
- 
+                    
                     if let snapshotDocuments = querySnapshot?.documents {
                         for doc in snapshotDocuments {
                             let data = doc.data()
                             if let messagesender = data[K.FStore.senderField] as? String, let messageBody = data[K.FStore.bodyField] as? String {
                                 let newMessage = Message(sender: messagesender, body: messageBody)
-                
+                                
                                 
                                 self.messages.append(newMessage)
                                 
                                 // Load message data
                                 DispatchQueue.main.async {
-                                self.tableView.reloadData()
+                                    self.tableView.reloadData()
+                                    
+                                    // Scroll to last message based on array position in section 0 of table
+                                    let indexPath = IndexPath(row: self.messages.count - 1, section: 0)
+                                    self.tableView.scrollToRow(at: indexPath, at: .top, animated: false)
+                                    
                                 }
                             }
                         }
                     }
                 }
             }
-        }
+    }
     
         
-   
+    
     // Save newly sent message to Firestore database messages collection with sender, body, and date fields
     @IBAction func sendPressed(_ sender: UIButton) {
         if let messageBody = messageTextfield.text, let messageSender = Auth.auth().currentUser?.email {
             db.collection(K.FStore.collectionName).addDocument(data: [
-            K.FStore.senderField: messageSender,
-            K.FStore.bodyField: messageBody,
-            K.FStore.dateField: Date().timeIntervalSince1970
+                K.FStore.senderField: messageSender,
+                K.FStore.bodyField: messageBody,
+                K.FStore.dateField: Date().timeIntervalSince1970
             ]) { (error) in
                 if let e = error {
                     print ("There was an issue saving data to firestore, \(e)")
                 } else {
                     print ("Successfully saved data.")
+                    
+                    // Clear text field after sending message; DispathQueue required in closure to execute code in main thread rather than background thread so that user interface updates
+                    DispatchQueue.main.async {
+                        self.messageTextfield.text = ""
+                    }
+                   
                 }
             }
         }

@@ -15,7 +15,7 @@ class MessageCell: UITableViewCell {
         // Initialization code
         
         // Create rounded message bubble
-        messageBubble.layer.cornerRadius = messageBubble.frame.size.height / 5
+        messageBubble.layer.cornerRadius = messageBubble.frame.size.height / 2
     }
 
     @IBOutlet weak var messageBubble: UIView!
